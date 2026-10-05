@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI COACH – Huấn Luyện Năng Lực Tự Chủ Ra Quyết Định THPT</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Marked.js for Markdown Rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Canvas Confetti for Celebration on Decision Map completion -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="style.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="h-full flex overflow-hidden bg-slate-50 text-slate-800">
+
+  <!-- ==================== SIDEBAR ==================== -->
+  <aside id="sidebar" class="w-80 bg-slate-900 text-slate-200 flex flex-col flex-shrink-0 transition-all duration-300 z-30 h-full border-r border-slate-800">
+    
+    <!-- App Branding -->
+    <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-md">
+          <i data-lucide="compass" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-base text-white tracking-wide flex items-center gap-1.5">
+            AI COACH THPT
+            <span class="text-[10px] bg-blue-500/20 text-blue-400 border border-blue-400/30 px-1.5 py-0.5 rounded-full">v1.0</span>
+          </h1>
+          <p class="text-xs text-slate-400">Tự chủ trong kỷ nguyên số</p>
+        </div>
+      </div>
+      <button id="close-sidebar-mobile" class="md:hidden text-slate-400 hover:text-white p-1 rounded-lg">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <!-- New Chat Button -->
+    <div class="p-3">
+      <button id="btn-new-chat" class="w-full flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium rounded-xl shadow transition duration-200 group">
+        <span class="flex items-center gap-2">
+          <i data-lucide="plus-circle" class="w-5 h-5 group-hover:rotate-90 transition-transform duration-300"></i>
+          Cuộc trò chuyện mới
+        </span>
+        <span class="text-xs bg-white/20 px-2 py-0.5 rounded-md font-mono">Ctrl+K</span>
+      </button>
+    </div>
+
+    <!-- Scaffolding Level Selector (Cơ chế 3-2-1-0) -->
+    <div class="px-3 pb-2">
+      <div class="bg-slate-800/80 rounded-xl p-3 border border-slate-700/60">
+        <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+          <span class="font-medium flex items-center gap-1.5 text-slate-300">
+            <i data-lucide="gauge" class="w-4 h-4 text-amber-400"></i>
+            Mức độ hỗ trợ (3-2-1-0)
+          </span>
+          <span id="scaffold-badge" class="px-2 py-0.5 rounded-full text-[11px] font-bold badge-scaffold-3">
+            Mức 3: Hỗ trợ cao
+          </span>
+        </div>
+        <select id="select-scaffold-level" class="w-full bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-200 px-2.5 py-1.5 focus:outline-none focus:border-blue-500">
+          <option value="3">Mức 3 – Hỗ trợ cao (Chia nhỏ, gợi ý nhẹ)</option>
+          <option value="2">Mức 2 – Hỗ trợ vừa (Chủ yếu đặt câu hỏi)</option>
+          <option value="1">Mức 1 – Hỗ trợ thấp (1 câu hỏi định hướng)</option>
+          <option value="0">Mức 0 – Tự chủ (Học sinh tự vận hành)</option>
+        </select>
+        <p id="scaffold-desc" class="text-[11px] text-slate-400 mt-1.5 leading-snug">
+          AI đặt câu hỏi cụ thể, chia nhỏ vấn đề và nhắc nhở học sinh từng bước.
+        </p>
+      </div>
+    </div>
+
+    <!-- 6 Competencies Progress Mini Dashboard -->
+    <div class="px-3 py-1">
+      <div class="bg-slate-800/60 rounded-xl p-2.5 border border-slate-700/40">
+        <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5">
+          <span class="font-medium flex items-center gap-1 text-slate-300">
+            <i data-lucide="layers" class="w-3.5 h-3.5 text-emerald-400"></i>
+            Khung 6 Năng lực
+          </span>
+          <span id="nl-progress-text" class="text-[11px] text-emerald-400 font-semibold">0/6 đạt</span>
+        </div>
+        <div class="grid grid-cols-6 gap-1 text-center" id="nl-indicators">
+          <div id="nl-step-1" class="py-1 px-0.5 rounded bg-slate-700 text-slate-400 text-[10px] font-mono transition-all" title="NL1: Nhận diện vấn đề & mục tiêu">NL1</div>
+          <div id="nl-step-2" class="py-1 px-0.5 rounded bg-slate-700 text-slate-400 text-[10px] font-mono transition-all" title="NL2: Chủ động tìm kiếm thông tin">NL2</div>
+          <div id="nl-step-3" class="py-1 px-0.5 rounded bg-slate-700 text-slate-400 text-[10px] font-mono transition-all" title="NL3: Kiểm chứng & đánh giá">NL3</div>
+          <div id="nl-step-4" class="py-1 px-0.5 rounded bg-slate-700 text-slate-400 text-[10px] font-mono transition-all" title="NL4: Xác định & cân nhắc phương án">NL4</div>
+          <div id="nl-step-5" class="py-1 px-0.5 rounded bg-slate-700 text-slate-400 text-[10px] font-mono transition-all" title="NL5: Ra quyết định & giải thích">NL5</div>
+          <div id="nl-step-6" class="py-1 px-0.5 rounded bg-slate-700 text-slate-400 text-[10px] font-mono transition-all" title="NL6: Phản tư & điều chỉnh">NL6</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- History / Sessions List -->
+    <div class="flex-1 overflow-y-auto px-3 py-2 space-y-1" id="chat-history-list">
+      <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider px-2 py-1">Lịch sử tình huống</div>
+      <!-- Items populated via JavaScript -->
+    </div>
+
+    <!-- Sidebar Bottom Footer -->
+    <div class="p-3 border-t border-slate-800 space-y-1.5 bg-slate-950/60">
+      <button id="btn-open-decision-map" class="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-950/40 rounded-lg transition border border-emerald-800/40">
+        <i data-lucide="map" class="w-4 h-4 text-emerald-400"></i>
+        <span>Bản đồ Quyết định của tôi</span>
+      </button>
+
+      <button id="btn-open-settings" class="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-slate-300 hover:bg-slate-800 rounded-lg transition">
+        <span class="flex items-center gap-2">
+          <i data-lucide="settings-2" class="w-4 h-4 text-blue-400"></i>
+          Quản lý & Cài đặt AI
+        </span>
+        <span id="api-status-badge" class="w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-amber-500/20" title="Chưa nhập API Key"></span>
+      </button>
+
+      <button id="btn-open-guide" class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 rounded-lg transition">
+        <i data-lucide="book-open" class="w-4 h-4 text-slate-400"></i>
+        Hướng dẫn sử dụng & Giáo viên
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- ==================== MAIN CHAT CONTENT ==================== -->
+  <main class="flex-1 flex flex-col h-full bg-white relative overflow-hidden">
+    
+    <!-- Top Navigation Bar -->
+    <header class="h-14 border-b border-slate-200 px-4 flex items-center justify-between bg-white/80 backdrop-blur-md z-10">
+      <div class="flex items-center space-x-3">
+        <button id="btn-toggle-sidebar" class="text-slate-600 hover:text-slate-900 p-1.5 rounded-lg hover:bg-slate-100 transition">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+        <div>
+          <h2 id="current-chat-title" class="font-semibold text-slate-800 text-sm md:text-base flex items-center gap-2">
+            AI COACH – Trợ lý Quyết định THPT
+          </h2>
+          <p class="text-xs text-slate-500 hidden sm:block">Không quyết định thay • Thúc đẩy tư duy phản biện • Đánh bại bẫy số</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <div id="trap-alert-box" class="hidden">
+          <!-- Dynamically inserted trap badge -->
+        </div>
+
+        <button id="btn-export-chat" class="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Xuất nội dung trò chuyện (Markdown/PDF)">
+          <i data-lucide="download" class="w-4 h-4"></i>
+        </button>
+
+        <button id="btn-clear-chat" class="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Xóa đoạn chat này">
+          <i data-lucide="trash-2" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Notification Banner: If API Key is missing -->
+    <div id="missing-key-banner" class="bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs text-amber-900 flex items-center justify-between hidden">
+      <div class="flex items-center gap-2">
+        <i data-lucide="info" class="w-4 h-4 text-amber-600 flex-shrink-0"></i>
+        <span>Đang chạy ở <strong>Chế độ Mô phỏng Offline</strong>. Để AI trả lời tự do mọi câu hỏi như ChatGPT, hãy nhập Gemini API Key miễn phí.</span>
+      </div>
+      <button id="btn-banner-enter-key" class="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold flex-shrink-0 transition">
+        Cài đặt Key ngay
+      </button>
+    </div>
+
+    <!-- Chat Messages Scroll Container -->
+    <div id="chat-messages" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 scroll-smooth">
+      
+      <!-- Welcome Hero (Shown when conversation is empty) -->
+      <div id="welcome-hero" class="max-w-3xl mx-auto my-6 text-center space-y-6">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white shadow-xl shadow-blue-500/20 animate-bounce duration-1000">
+          <i data-lucide="brain-circuit" class="w-9 h-9"></i>
+        </div>
+
+        <div class="space-y-2">
+          <h3 class="text-2xl font-bold text-slate-800">Chào bạn! Tôi là AI Coach</h3>
+          <p class="text-slate-600 max-w-xl mx-auto text-sm leading-relaxed">
+            Tôi ở đây để cùng bạn rèn luyện năng lực <strong class="text-blue-600 font-semibold">Tự chủ trong ra quyết định</strong> trên môi trường số. 
+            Tôi sẽ không quyết định thay bạn, mà giúp bạn làm chủ 6 bước: <span class="text-slate-700 font-medium">Nhận diện → Tìm kiếm → Kiểm chứng → Cân nhắc → Quyết định → Phản tư</span>.
+          </p>
+        </div>
+
+        <!-- Warning Principle Banner -->
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3.5 max-w-xl mx-auto text-left flex items-start gap-3 text-xs text-amber-900 shadow-sm">
+          <i data-lucide="shield-alert" class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5"></i>
+          <div>
+            <strong class="font-semibold text-amber-950 block mb-0.5">Nguyên tắc hoạt động của Coach:</strong>
+            Nếu bạn nói "Chọn hộ em", tôi sẽ từ chối đưa ra lựa chọn và hướng dẫn bạn tự tìm căn cứ. Bạn chính là CHỦ THỂ của mọi quyết định!
+          </div>
+        </div>
+
+        <!-- Sample Situation Starters -->
+        <div class="pt-2 text-left max-w-2xl mx-auto">
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3 text-center">Hoặc chọn một tình huống thực tế để bắt đầu ngay:</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <button class="starter-card text-left p-3.5 rounded-xl border border-slate-200 bg-white hover:border-blue-500 hover:shadow-md hover:shadow-blue-500/5 transition group" data-prompt="Em thấy trên TikTok có khóa học kỹ năng đang Flash Sale giảm 70% chỉ còn 15 phút và đếm ngược. Em đang rất muốn bấm mua ngay kẻo hết!">
+              <div class="flex items-center gap-2 font-semibold text-xs text-blue-600 mb-1">
+                <i data-lucide="clock" class="w-4 h-4"></i>
+                Bẫy Flash Sale & FOMO
+              </div>
+              <p class="text-xs text-slate-600 leading-snug">"Khóa học TikTok giảm 70% còn đếm ngược 15 phút, em muốn mua ngay..."</p>
+            </button>
+
+            <button class="starter-card text-left p-3.5 rounded-xl border border-slate-200 bg-white hover:border-blue-500 hover:shadow-md hover:shadow-blue-500/5 transition group" data-prompt="Cả lớp em đang rộ lên mua một đôi giày hot trend vì có một TikToker KOC triệu view khen nức nở. Em đang tính xin tiền ba mẹ để mua theo.">
+              <div class="flex items-center gap-2 font-semibold text-xs text-purple-600 mb-1">
+                <i data-lucide="users" class="w-4 h-4"></i>
+                Áp lực bạn bè & KOL/KOC
+              </div>
+              <p class="text-xs text-slate-600 leading-snug">"Cả lớp mua đôi giày hot trend theo KOC triệu view, em định xin tiền mua theo..."</p>
+            </button>
+
+            <button class="starter-card text-left p-3.5 rounded-xl border border-slate-200 bg-white hover:border-blue-500 hover:shadow-md hover:shadow-blue-500/5 transition group" data-prompt="Em đang phân vân không biết nên chọn tổ hợp môn tự nhiên (Khối A) hay xã hội (Khối D) cho định hướng tương lai. Có quá nhiều lời khuyên trái chiều trên mạng.">
+              <div class="flex items-center gap-2 font-semibold text-xs text-emerald-600 mb-1">
+                <i data-lucide="graduation-cap" class="w-4 h-4"></i>
+                Định hướng học tập THPT
+              </div>
+              <p class="text-xs text-slate-600 leading-snug">"Phân vân chọn khối A hay khối D, quá nhiều lời khuyên trái ngược trên mạng..."</p>
+            </button>
+
+            <button class="starter-card text-left p-3.5 rounded-xl border border-slate-200 bg-white hover:border-blue-500 hover:shadow-md hover:shadow-blue-500/5 transition group" data-prompt="Bạn chọn giúp em đi! Em có 8 triệu thì nên mua iPhone cũ hay điện thoại Android mới tinh để phục vụ việc học?">
+              <div class="flex items-center gap-2 font-semibold text-xs text-rose-600 mb-1">
+                <i data-lucide="help-circle" class="w-4 h-4"></i>
+                Thử thách: Đòi AI chọn hộ
+              </div>
+              <p class="text-xs text-slate-600 leading-snug">"Bạn chọn giúp em đi! Có 8 triệu nên mua iPhone cũ hay Android mới?"</p>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Input Box Area -->
+    <div class="border-t border-slate-200 bg-white/95 backdrop-blur p-4">
+      <div class="max-w-3xl mx-auto space-y-2">
+        
+        <!-- Quick Guidance Pill Suggestions -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs no-scrollbar">
+          <span class="text-slate-400 flex items-center gap-1 flex-shrink-0">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-500"></i> Gợi ý phản hồi:
+          </span>
+          <button class="quick-pill px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex-shrink-0 transition" data-text="Mục tiêu chính của em là: ">
+            🎯 Mục tiêu của em là...
+          </button>
+          <button class="quick-pill px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex-shrink-0 transition" data-text="Em thấy thông tin này từ nguồn: ">
+            🔎 Em lấy thông tin từ...
+          </button>
+          <button class="quick-pill px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex-shrink-0 transition" data-text="Em đang cân nhắc 2 phương án là: ">
+            ⚖️ Em có 2 phương án...
+          </button>
+          <button class="quick-pill px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex-shrink-0 transition" data-text="Em chọn phương án này vì căn cứ: ">
+            💡 Căn cứ của em là...
+          </button>
+          <button class="quick-pill px-2.5 py-1 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 flex-shrink-0 transition" data-text="Hãy tổng hợp giúp em Bản đồ quyết định của tôi!">
+            🧭 Tạo Bản đồ Quyết định
+          </button>
+        </div>
+
+        <!-- Chat Input Form -->
+        <div class="relative flex items-end bg-slate-100 rounded-2xl border border-slate-300 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all p-1.5 shadow-sm">
+          <textarea id="chat-input" rows="1" placeholder="Mô tả vấn đề hoặc trả lời câu hỏi của AI Coach..." class="w-full bg-transparent px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none resize-none max-h-40 min-h-[40px] leading-relaxed"></textarea>
+          
+          <div class="flex items-center space-x-1.5 pb-1 pr-1 flex-shrink-0">
+            <!-- Voice Dictation -->
+            <button id="btn-voice-input" type="button" class="p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-200 rounded-xl transition" title="Nhập liệu bằng giọng nói (Microphone)">
+              <i data-lucide="mic" class="w-4 h-4"></i>
+            </button>
+            
+            <!-- Send Button -->
+            <button id="btn-send-message" type="button" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow transition disabled:opacity-50 disabled:cursor-not-allowed">
+              <i data-lucide="arrow-up" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <p class="text-[11px] text-center text-slate-400 flex items-center justify-center gap-1">
+          <i data-lucide="info" class="w-3 h-3"></i>
+          AI Coach huấn luyện năng lực tự chủ • Nhấn Shift + Enter để xuống dòng
+        </p>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ==================== MODAL: ADMIN & SETTINGS ==================== -->
+  <div id="settings-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-4xl rounded-2xl shadow-2xl border border-slate-200 flex flex-col max-h-[90vh] overflow-hidden">
+      
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+        <div class="flex items-center space-x-2.5">
+          <div class="p-2 bg-blue-100 text-blue-600 rounded-xl">
+            <i data-lucide="sliders" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-800 text-base">Quản Lý Hệ Thống & Cài Đặt AI Coach</h3>
+            <p class="text-xs text-slate-500">Cấu hình API LLM, Quản lý Prompt huấn luyện, Theo dõi học sinh</p>
+          </div>
+        </div>
+        <button id="btn-close-settings" class="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="flex border-b border-slate-200 px-6 bg-white gap-6 text-xs font-semibold">
+        <button class="settings-tab-btn py-3 border-b-2 border-blue-600 text-blue-600 flex items-center gap-1.5" data-tab="tab-api">
+          <i data-lucide="cpu" class="w-4 h-4"></i> Cấu hình AI & API
+        </button>
+        <button class="settings-tab-btn py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-1.5" data-tab="tab-prompt">
+          <i data-lucide="file-code" class="w-4 h-4"></i> System Prompt Huấn Luyện
+        </button>
+        <button class="settings-tab-btn py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-1.5" data-tab="tab-sessions">
+          <i data-lucide="database" class="w-4 h-4"></i> Dữ liệu & Nhật ký Học sinh
+        </button>
+        <button class="settings-tab-btn py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-1.5" data-tab="tab-deploy">
+          <i data-lucide="globe" class="w-4 h-4"></i> Triển khai & Chia sẻ Web
+        </button>
+      </div>
+
+      <!-- Tab Content Body -->
+      <div class="p-6 overflow-y-auto flex-1 space-y-6 text-sm">
+        
+        <!-- TAB 1: API SETTINGS -->
+        <div id="tab-api" class="space-y-4">
+          <div class="bg-blue-50 border border-blue-200 rounded-xl p-3.5 text-xs text-blue-900 flex items-start gap-2.5">
+            <i data-lucide="info" class="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5"></i>
+            <div>
+              <strong>Kích hoạt Trí tuệ Nhân tạo như ChatGPT:</strong> Bạn hãy nhập <strong>Google Gemini API Key</strong> (Miễn phí 100%, không cần thẻ ngân hàng) để chatbot có thể hiểu và phản hồi thông minh với mọi tình huống mà học sinh đưa ra.
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Nhà cung cấp Mô hình (Provider):</label>
+              <select id="cfg-provider" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500">
+                <option value="gemini">Google Gemini API (Khuyên dùng - Miễn phí, siêu thông minh)</option>
+                <option value="openai">OpenAI API (GPT-4o / GPT-4o-mini)</option>
+                <option value="offline">Chế độ Giả lập Offline (Không cần API Key)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Tên Model:</label>
+              <input id="cfg-model" type="text" value="gemini-2.0-flash" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500" placeholder="gemini-2.0-flash, gemini-1.5-pro, gpt-4o-mini...">
+            </div>
+          </div>
+
+          <div id="api-key-group">
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-semibold text-slate-700">API Key:</label>
+              <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs text-blue-600 hover:underline flex items-center gap-1 font-semibold">
+                👉 Nhấp vào đây để lấy Google Gemini API Key MIỄN PHÍ <i data-lucide="external-link" class="w-3 h-3"></i>
+              </a>
+            </div>
+            <div class="relative">
+              <input id="cfg-apikey" type="password" placeholder="Dán API Key của bạn vào đây (AIzaSy...)" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 pr-10">
+              <button id="btn-toggle-key-vis" type="button" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">
+                <i data-lucide="eye" class="w-4 h-4"></i>
+              </button>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">Khóa API được lưu cục bộ trên trình duyệt (LocalStorage) của bạn và gửi trực tiếp tới máy chủ AI, hoàn toàn an toàn và bảo mật.</p>
+          </div>
+
+          <div class="flex items-center gap-3 pt-2">
+            <button id="btn-test-api" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-medium flex items-center gap-2 transition">
+              <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
+              Kiểm tra kết nối API
+            </button>
+            <span id="api-test-result" class="text-xs font-medium"></span>
+          </div>
+        </div>
+
+        <!-- TAB 2: SYSTEM PROMPT -->
+        <div id="tab-prompt" class="space-y-3 hidden">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="font-semibold text-slate-800 text-xs">Nội dung Huấn luyện AI (System Instructions)</h4>
+              <p class="text-xs text-slate-500">Bao gồm đầy đủ vai trò, 6 năng lực, quy tắc IF-THEN, cơ chế 3-2-1-0 và nhận diện bẫy số.</p>
+            </div>
+            <button id="btn-reset-prompt" class="px-3 py-1.5 text-xs text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg flex items-center gap-1.5 transition">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+              Khôi phục nguyên bản
+            </button>
+          </div>
+          <textarea id="cfg-system-prompt" rows="14" class="w-full bg-slate-900 text-emerald-400 font-mono text-xs rounded-xl p-4 border border-slate-700 focus:outline-none focus:border-blue-500 leading-relaxed"></textarea>
+        </div>
+
+        <!-- TAB 3: STUDENT SESSIONS -->
+        <div id="tab-sessions" class="space-y-4 hidden">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="font-semibold text-slate-800 text-xs">Các phiên giải quyết tình huống của Học sinh</h4>
+              <p class="text-xs text-slate-500">Theo dõi hành trình ra quyết định và tiến độ rèn luyện năng lực</p>
+            </div>
+            <div class="flex gap-2">
+              <button id="btn-export-all-data" class="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i> Xuất file JSON
+              </button>
+              <button id="btn-clear-all-sessions" class="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
+                <i data-lucide="trash" class="w-3.5 h-3.5"></i> Xóa tất cả
+              </button>
+            </div>
+          </div>
+
+          <div class="border border-slate-200 rounded-xl overflow-hidden">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+                <tr>
+                  <th class="p-3">Tiêu đề tình huống</th>
+                  <th class="p-3">Thời gian</th>
+                  <th class="p-3">Số tin nhắn</th>
+                  <th class="p-3">Mức hỗ trợ</th>
+                  <th class="p-3 text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="sessions-table-body" class="divide-y divide-slate-100 text-slate-700">
+                <!-- Dynamically filled -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB 4: DEPLOYMENT GUIDE -->
+        <div id="tab-deploy" class="space-y-4 hidden leading-relaxed text-xs text-slate-700">
+          <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-emerald-900">
+            <h5 class="font-bold text-sm mb-1 flex items-center gap-2">
+              <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+              Ứng dụng Web Độc lập & Sẵn sàng chạy ngay!
+            </h5>
+            <p>Trang web này được xây dựng theo kiến trúc Zero-Dependency Client-Side App. Bạn có thể mở trực tiếp bằng bất kỳ trình duyệt nào mà không cần cài đặt phần mềm phụ trợ.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="border border-slate-200 rounded-xl p-4 bg-slate-50">
+              <h6 class="font-bold text-slate-900 mb-2 flex items-center gap-2">
+                <span class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">1</span>
+                Mở trực tiếp trên máy Mac / Windows
+              </h6>
+              <p class="text-slate-600 mb-2">Chỉ cần nhấp đúp chuột vào tệp <code class="bg-white px-1.5 py-0.5 rounded border text-red-600 font-mono">index.html</code> để mở trên Chrome, Safari, Edge.</p>
+            </div>
+
+            <div class="border border-slate-200 rounded-xl p-4 bg-slate-50">
+              <h6 class="font-bold text-slate-900 mb-2 flex items-center gap-2">
+                <span class="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px]">2</span>
+                Đưa lên Web miễn phí cho Học sinh truy cập
+              </h6>
+              <p class="text-slate-600 mb-2">Để cả lớp cùng truy cập qua điện thoại/máy tính với đường link web:</p>
+              <ul class="list-disc pl-4 space-y-1 text-slate-600">
+                <li><strong>Netlify Drop:</strong> Kéo thả thư mục <code class="text-blue-600 font-mono">ai-coach-web</code> vào <a href="https://app.netlify.com/drop" target="_blank" class="underline text-blue-600">app.netlify.com/drop</a> là có link ngay trong 10 giây.</li>
+                <li><strong>GitHub Pages:</strong> Tạo kho lưu trữ GitHub và bật tính năng Pages hoàn toàn miễn phí.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-3 border-t border-slate-200 flex items-center justify-between bg-slate-50">
+        <span class="text-xs text-slate-500">Mọi thay đổi sẽ tự động được lưu vào trình duyệt của bạn.</span>
+        <button id="btn-save-settings" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl text-xs shadow transition">
+          Lưu Cài Đặt
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: DECISION MAP VIEWER ==================== -->
+  <div id="decision-map-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 flex flex-col max-h-[90vh] overflow-hidden">
+      
+      <!-- Header -->
+      <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-gradient-to-r from-blue-50 to-emerald-50">
+        <div class="flex items-center space-x-2.5">
+          <div class="p-2 bg-emerald-100 text-emerald-700 rounded-xl">
+            <i data-lucide="compass" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-900 text-base">🧭 BẢN ĐỒ QUYẾT ĐỊNH CỦA TÔI</h3>
+            <p class="text-xs text-slate-500">Bản tổng kết tự chủ ra quyết định dựa trên căn cứ</p>
+          </div>
+        </div>
+        <button id="btn-close-decision-map" class="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Decision Map Content -->
+      <div class="p-6 overflow-y-auto flex-1 text-sm space-y-4">
+        <div id="decision-map-render-target" class="bg-gradient-to-b from-slate-50 to-white p-5 rounded-xl border border-slate-200 font-sans space-y-4 shadow-sm text-slate-800">
+          <div class="text-center border-b pb-3 border-slate-200">
+            <h4 class="text-lg font-bold text-blue-900 uppercase tracking-wide">HÀNH TRÌNH TỰ CHỦ TRONG KỶ NGUYÊN SỐ</h4>
+            <p class="text-xs text-slate-500 italic mt-0.5">"Tự chủ là biết dừng lại, tìm kiếm, kiểm chứng, cân nhắc và lựa chọn có căn cứ."</p>
+          </div>
+
+          <div id="decision-map-body" class="space-y-3 prose-chat">
+            <!-- Dynamically populated -->
+            <p class="text-slate-400 italic text-center py-8">Chưa có bản đồ quyết định nào trong phiên này. Hãy trò chuyện với AI Coach để hoàn thành các bước!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Actions -->
+      <div class="px-6 py-3 border-t border-slate-200 flex items-center justify-between bg-slate-50">
+        <button id="btn-copy-map" class="px-4 py-2 border border-slate-300 hover:bg-white text-slate-700 rounded-xl text-xs font-medium flex items-center gap-1.5 transition">
+          <i data-lucide="copy" class="w-3.5 h-3.5"></i> Sao chép văn bản
+        </button>
+        <div class="flex gap-2">
+          <button id="btn-print-map" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 shadow transition">
+            <i data-lucide="printer" class="w-3.5 h-3.5"></i> In / Xuất PDF
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="system-prompt.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
